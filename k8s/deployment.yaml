@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tp-api
+  labels:
+    app: tp-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tp-api
+  template:
+    metadata:
+      labels:
+        app: tp-api
+    spec:
+      containers:
+        - name: tp-api
+          image: tp-api:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: APP_VERSION
+              value: "1.0.0"
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 256Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tp-api-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: tp-api
+  ports:
+    - port: 80
+      targetPort: 8000
