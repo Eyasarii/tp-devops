@@ -1,4 +1,20 @@
+# Environnements virtuels
 .venv/
+venv/
+
+# Cache Python
 __pycache__/
-*.db
+*.py[cod]
+
+# Cache Pytest
 .pytest_cache/
+
+# Bases de données locales
+*.db
+
+# Fichiers MLflow générés
+ml-flow/mlartifacts/
+ml-flow/mlruns/
+
+# Fichiers temporaires
+*.log

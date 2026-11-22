@@ -1,48 +1,92 @@
+# ---------------------------------------------------------
+# Deployment : déploiement et gestion des pods de l'API
+# ---------------------------------------------------------
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tp-api
   labels:
     app: tp-api
+
 spec:
+  # Nombre initial de pods souhaités.
+  # Le nombre a ensuite été augmenté à 5 avec kubectl scale.
   replicas: 3
+
+  # Le Deployment gère les pods qui portent ce label.
   selector:
     matchLabels:
       app: tp-api
+
+  # Modèle utilisé pour créer les pods.
   template:
     metadata:
       labels:
         app: tp-api
+
     spec:
       containers:
         - name: tp-api
+
+          # Image Docker utilisée pour lancer l'API.
           image: tp-api:1.0
+
+          # Utilise l'image locale si elle est déjà disponible.
           imagePullPolicy: IfNotPresent
+
+          # Port sur lequel l'application écoute dans le conteneur.
           ports:
             - containerPort: 8000
+
+          # Variable d'environnement transmise à l'application.
           env:
             - name: APP_VERSION
               value: "1.0.0"
+
+          # Vérifie si l'application est prête à recevoir du trafic.
+          # Kubernetes utilise cette sonde pour déterminer si le pod
+          # peut recevoir des requêtes.
           readinessProbe:
             httpGet: { path: /health, port: 8000 }
             initialDelaySeconds: 3
             periodSeconds: 5
+
+          # Vérifie si l'application fonctionne toujours.
+          # En cas d'échec répété, Kubernetes peut redémarrer le conteneur.
           livenessProbe:
             httpGet: { path: /health, port: 8000 }
             initialDelaySeconds: 10
             periodSeconds: 10
+
+          # Ressources minimales demandées et limites maximales autorisées.
           resources:
-            requests: { cpu: 100m, memory: 128Mi }
-            limits: { cpu: 500m, memory: 256Mi }
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+
 ---
+# ---------------------------------------------------------
+# Service : exposition de l'API et accès aux pods
+# ---------------------------------------------------------
 apiVersion: v1
 kind: Service
 metadata:
   name: tp-api-service
+
 spec:
+  # Type LoadBalancer : expose le service à l'extérieur du cluster.
   type: LoadBalancer
+
+  # Envoie le trafic vers les pods portant ce label.
   selector:
     app: tp-api
+
   ports:
+    # Port accessible via le Service.
     - port: 80
+
+      # Port du conteneur vers lequel le trafic est redirigé.
       targetPort: 8000
